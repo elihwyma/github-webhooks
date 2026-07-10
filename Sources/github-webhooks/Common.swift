@@ -397,25 +397,25 @@ public struct GitHubPullRequest: Codable, Sendable, Hashable {
     public let nodeId: String?
     public let number: Int
     public let url: String
-    public let htmlUrl: String
+    public let htmlUrl: String?
     public let diffUrl: String?
     public let patchUrl: String?
     public let issueUrl: String?
-    public let state: String
-    public let locked: Bool
-    public let title: String
+    public let state: String?
+    public let locked: Bool?
+    public let title: String?
     public let user: GitHubUser?
     public let body: String?
-    public let labels: [GitHubLabel]
+    public let labels: [GitHubLabel]?
     public let milestone: GitHubMilestone?
     public let assignee: GitHubUser?
-    public let assignees: [GitHubUser]
-    public let requestedReviewers: [GitHubUser]
-    public let requestedTeams: [GitHubTeam]
-    public let draft: Bool
+    public let assignees: [GitHubUser]?
+    public let requestedReviewers: [GitHubUser]?
+    public let requestedTeams: [GitHubTeam]?
+    public let draft: Bool?
     public let head: GitHubPullRequestBranch
     public let base: GitHubPullRequestBranch
-    public let createdAt: String
+    public let createdAt: String?
     public let updatedAt: String?
     public let closedAt: String?
     public let mergedAt: String?
