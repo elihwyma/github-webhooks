@@ -345,7 +345,7 @@ public struct GitHubIssue: Codable, Sendable, Hashable {
     public let body: String?
     public let bodyHtml: String?
     public let bodyText: String?
-    public let user: GitHubUser
+    public let user: GitHubUser?
     public let labels: [GitHubLabel]
     public let state: String
     public let stateName: String?
@@ -378,7 +378,7 @@ public struct GitHubIssue: Codable, Sendable, Hashable {
 // MARK: - Pull Request
 
 public struct GitHubPullRequestBranch: Codable, Sendable, Hashable {
-    public let label: String
+    public let label: String?
     public let ref: String
     public let sha: String
     public let user: GitHubUser?
@@ -394,7 +394,7 @@ public struct GitHubAutoMerge: Codable, Sendable, Hashable {
 
 public struct GitHubPullRequest: Codable, Sendable, Hashable {
     public let id: Int
-    public let nodeId: String
+    public let nodeId: String?
     public let number: Int
     public let url: String
     public let htmlUrl: String
@@ -404,7 +404,7 @@ public struct GitHubPullRequest: Codable, Sendable, Hashable {
     public let state: String
     public let locked: Bool
     public let title: String
-    public let user: GitHubUser
+    public let user: GitHubUser?
     public let body: String?
     public let labels: [GitHubLabel]
     public let milestone: GitHubMilestone?
