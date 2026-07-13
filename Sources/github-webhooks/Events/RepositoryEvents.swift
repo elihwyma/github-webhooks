@@ -332,7 +332,7 @@ public enum RepositoryVulnerabilityAlertAction: String, Codable, Sendable, Hasha
 public struct GitHubRepositoryVulnerabilityAlert: Codable, Sendable, Hashable {
     public let id: Int
     public let number: Int
-    public let nodeId: String
+    public let nodeId: String?
     /// One of: `open`, `dismissed`, `fixed`.
     public let state: String
     public let affectedRange: String

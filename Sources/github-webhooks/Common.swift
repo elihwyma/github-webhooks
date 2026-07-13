@@ -390,7 +390,7 @@ public struct GitHubSubIssuesSummary: Codable, Sendable, Hashable {
 
 public struct GitHubIssue: Codable, Sendable, Hashable {
     public let id: Int
-    public let nodeId: String
+    public let nodeId: String?
     public let number: Int
     public let title: String
     public let body: String?
