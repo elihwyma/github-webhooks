@@ -4,7 +4,7 @@ import Foundation
 
 public struct PingEvent: Codable, Sendable {
     public let zen: String
-    public let hookId: Int
+    public let hookId: Int?
     public let hook: GitHubHook?
     public let repository: GitHubRepository?
     public let sender: GitHubUser?
@@ -161,13 +161,58 @@ public struct InstallationRepositoriesEvent: Codable, Sendable {
 
 // MARK: - Installation Target Event
 
+public enum InstallationTargetAction: String, Codable, Sendable, Hashable {
+    case renamed
+}
+
+/// The user or organization account that a GitHub App is installed on.
+/// Unlike `GitHubUser`, only `id`, `node_id`, `avatar_url` and `html_url` are guaranteed.
+public struct GitHubInstallationTargetAccount: Codable, Sendable, Hashable {
+    public let id: Int
+    public let nodeId: String?
+    public let login: String?
+    public let name: String?
+    public let slug: String?
+    public let type: String?
+    public let avatarUrl: String?
+    public let gravatarId: String?
+    public let description: String?
+    public let websiteUrl: String?
+    public let htmlUrl: String?
+    public let url: String?
+    public let eventsUrl: String?
+    public let followersUrl: String?
+    public let followingUrl: String?
+    public let gistsUrl: String?
+    public let hooksUrl: String?
+    public let issuesUrl: String?
+    public let membersUrl: String?
+    public let organizationsUrl: String?
+    public let publicMembersUrl: String?
+    public let receivedEventsUrl: String?
+    public let reposUrl: String?
+    public let starredUrl: String?
+    public let subscriptionsUrl: String?
+    public let followers: Int?
+    public let following: Int?
+    public let publicGists: Int?
+    public let publicRepos: Int?
+    public let hasOrganizationProjects: Bool?
+    public let hasRepositoryProjects: Bool?
+    public let isVerified: Bool?
+    public let siteAdmin: Bool?
+    public let createdAt: String?
+    public let updatedAt: String?
+}
+
 public struct InstallationTargetEvent: Codable, Sendable {
-    public let action: String
+    public let action: InstallationTargetAction
     public let installation: GitHubInstallation
-    public let account: GitHubUser?
+    public let account: GitHubInstallationTargetAccount?
     public let changes: GitHubInstallationTargetChanges?
     public let targetType: String?
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let enterprise: GitHubEnterprise?
 }
@@ -248,16 +293,27 @@ public enum PersonalAccessTokenRequestAction: String, Codable, Sendable, Hashabl
     case denied
 }
 
+/// Requested permissions, categorized by scope.
+/// Each map is keyed by permission name with the access level as value
+/// (e.g. `{"organization_administration": "read"}`).
+public struct GitHubPersonalAccessTokenPermissions: Codable, Sendable, Hashable {
+    public let organization: [String: String]?
+    public let repository: [String: String]?
+    public let other: [String: String]?
+}
+
 public struct GitHubPersonalAccessTokenRequest: Codable, Sendable, Hashable {
     public let id: Int
     public let owner: GitHubUser?
-    public let permissionsAdded: [String: [String]]?
-    public let permissionsUpgraded: [String: [String]]?
-    public let permissionsResult: [String: [String]]?
+    public let permissionsAdded: GitHubPersonalAccessTokenPermissions?
+    public let permissionsUpgraded: GitHubPersonalAccessTokenPermissions?
+    public let permissionsResult: GitHubPersonalAccessTokenPermissions?
     public let repositorySelection: String?
     public let repositoryCount: Int?
-    public let repositories: [GitHubRepository]?
+    public let repositories: [GitHubInstallationRepository]?
     public let createdAt: String?
+    public let tokenId: Int?
+    public let tokenName: String?
     public let tokenExpired: Bool?
     public let tokenExpiresAt: String?
     public let tokenLastUsedAt: String?
@@ -309,23 +365,31 @@ public struct MergeGroupEvent: Codable, Sendable {
 public enum CustomPropertyAction: String, Codable, Sendable, Hashable {
     case created
     case deleted
+    case promotedToEnterprise = "promoted_to_enterprise"
     case updated
 }
 
 public struct GitHubCustomProperty: Codable, Sendable, Hashable {
     public let propertyName: String
-    public let valueType: String
+    /// The URL that can be used to fetch, update, or delete info about this property.
+    public let url: String?
+    /// The source type of the property: `organization` or `enterprise`.
+    public let sourceType: String?
+    /// Absent for the `deleted` action, which only includes `property_name`.
+    public let valueType: String?
     public let required: Bool?
-    public let defaultValue: String?
+    /// A string, or an array of strings for multi-select properties.
+    public let defaultValue: GitHubJSONValue?
     public let description: String?
     public let allowedValues: [String]?
     public let valuesEditableBy: String?
+    public let requireExplicitValues: Bool?
 }
 
 public struct CustomPropertyEvent: Codable, Sendable {
     public let action: CustomPropertyAction
     public let definition: GitHubCustomProperty?
-    public let sender: GitHubUser
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -339,14 +403,15 @@ public enum CustomPropertyValuesAction: String, Codable, Sendable, Hashable {
 
 public struct GitHubCustomPropertyValue: Codable, Sendable, Hashable {
     public let propertyName: String
-    public let value: String?
+    /// String, array of strings, or null depending on the property type.
+    public let value: GitHubJSONValue?
 }
 
 public struct CustomPropertyValuesEvent: Codable, Sendable {
     public let action: CustomPropertyValuesAction
     public let repository: GitHubRepository
-    public let oldProperties: [GitHubCustomPropertyValue]?
-    public let newProperties: [GitHubCustomPropertyValue]?
+    public let oldPropertyValues: [GitHubCustomPropertyValue]?
+    public let newPropertyValues: [GitHubCustomPropertyValue]?
     public let sender: GitHubUser
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
@@ -364,10 +429,11 @@ public enum SubIssuesAction: String, Codable, Sendable, Hashable {
 
 public struct SubIssuesEvent: Codable, Sendable {
     public let action: SubIssuesAction
-    public let issue: GitHubIssue?
+    public let parentIssueId: Int?
     public let parentIssue: GitHubIssue?
-    public let subIssue: GitHubIssue?
     public let parentIssueRepo: GitHubRepository?
+    public let subIssueId: Int?
+    public let subIssue: GitHubIssue?
     public let subIssueRepo: GitHubRepository?
     public let repository: GitHubRepository?
     public let sender: GitHubUser
@@ -383,7 +449,6 @@ public struct GitHubPageBuildError: Codable, Sendable, Hashable {
 }
 
 public struct GitHubPageBuild: Codable, Sendable, Hashable {
-    public let id: Int?
     public let status: String?
     public let error: GitHubPageBuildError?
     public let pusher: GitHubUser?
@@ -432,6 +497,7 @@ public struct GitHubSponsorship: Codable, Sendable, Hashable {
     public let maintainer: GitHubUser?
     public let sponsor: GitHubUser?
     public let sponsorable: GitHubUser?
+    public let privacyLevel: String?
     public let tier: GitHubSponsorshipTier?
 }
 
@@ -461,11 +527,91 @@ public enum PackageAction: String, Codable, Sendable, Hashable {
     case updated
 }
 
+/// npm-specific metadata attached to a package version (nullable in the payload).
+public struct GitHubNpmMetadata: Codable, Sendable, Hashable {
+    public let name: String?
+    public let version: String?
+    public let npmUser: String?
+    /// Object of strings, or null.
+    public let author: GitHubJSONValue?
+    /// Object of strings, or null.
+    public let bugs: GitHubJSONValue?
+    public let dependencies: [String: String]?
+    public let devDependencies: [String: String]?
+    public let peerDependencies: [String: String]?
+    public let optionalDependencies: [String: String]?
+    public let description: String?
+    /// Object of strings, or null.
+    public let dist: GitHubJSONValue?
+    public let gitHead: String?
+    public let homepage: String?
+    public let license: String?
+    public let main: String?
+    /// Object of strings, or null.
+    public let repository: GitHubJSONValue?
+    public let scripts: GitHubJSONValue?
+    public let id: String?
+    public let nodeVersion: String?
+    public let npmVersion: String?
+    public let hasShrinkwrap: Bool?
+    public let maintainers: [GitHubJSONValue]?
+    public let contributors: [GitHubJSONValue]?
+    public let engines: [String: String]?
+    public let keywords: [String]?
+    public let files: [String]?
+    public let bin: GitHubJSONValue?
+    public let man: GitHubJSONValue?
+    /// Object of strings, or null.
+    public let directories: GitHubJSONValue?
+    public let os: [String]?
+    public let cpu: [String]?
+    public let readme: String?
+    public let installationCommand: String?
+    public let releaseId: Int?
+    public let commitOid: String?
+    public let publishedViaActions: Bool?
+    public let deletedById: Int?
+}
+
+public struct GitHubNugetMetadataItem: Codable, Sendable, Hashable {
+    /// String or integer.
+    public let id: GitHubJSONValue?
+    public let name: String?
+    /// Boolean, string, integer, or object.
+    public let value: GitHubJSONValue?
+}
+
+public struct GitHubContainerMetadataTag: Codable, Sendable, Hashable {
+    public let digest: String?
+    public let name: String?
+}
+
+public struct GitHubContainerMetadata: Codable, Sendable, Hashable {
+    public let labels: GitHubJSONValue?
+    public let manifest: GitHubJSONValue?
+    public let tag: GitHubContainerMetadataTag?
+}
+
+public struct GitHubPackageFile: Codable, Sendable, Hashable {
+    public let id: Int?
+    public let name: String?
+    public let downloadUrl: String?
+    public let sha256: String?
+    public let sha1: String?
+    public let md5: String?
+    public let contentType: String?
+    public let state: String?
+    public let size: Int?
+    public let createdAt: String?
+    public let updatedAt: String?
+}
+
 public struct GitHubPackageVersion: Codable, Sendable, Hashable {
     public let id: Int
     public let version: String?
     public let summary: String?
-    public let body: String?
+    /// A string, or an object describing the package contents.
+    public let body: GitHubJSONValue?
     public let bodyHtml: String?
     public let release: GitHubRelease?
     public let manifest: String?
@@ -473,24 +619,27 @@ public struct GitHubPackageVersion: Codable, Sendable, Hashable {
     public let tagName: String?
     public let targetCommitish: String?
     public let targetOid: String?
-    public let isDraft: Bool?
-    public let isPrerelease: Bool?
+    public let draft: Bool?
+    public let prerelease: Bool?
     public let createdAt: String?
     public let updatedAt: String?
-    public let metadata: [String]?
-    public let dockerMetadata: [String]?
-    public let packageType: String?
-    public let installedBy: GitHubUser?
+    public let metadata: [GitHubJSONValue]?
+    public let containerMetadata: GitHubContainerMetadata?
+    public let dockerMetadata: [GitHubJSONValue]?
+    public let npmMetadata: GitHubNpmMetadata?
+    public let nugetMetadata: [GitHubNugetMetadataItem]?
+    public let rubygemsMetadata: [GitHubJSONValue]?
     public let name: String?
     public let description: String?
     public let author: GitHubUser?
-    public let rubygemsMetadata: [String]?
-    public let nugetMetadata: [String]?
+    public let packageFiles: [GitHubPackageFile]?
+    public let packageUrl: String?
+    public let sourceUrl: String?
+    public let installationCommand: String?
 }
 
 public struct GitHubPackage: Codable, Sendable, Hashable {
     public let id: Int
-    public let nodeId: String?
     public let name: String
     public let namespace: String?
     public let description: String?
@@ -531,9 +680,10 @@ public enum RegistryPackageAction: String, Codable, Sendable, Hashable {
 
 public struct RegistryPackageEvent: Codable, Sendable {
     public let action: RegistryPackageAction
-    public let package: GitHubPackage
+    public let registryPackage: GitHubPackage
     public let repository: GitHubRepository?
     public let sender: GitHubUser
     public let organization: GitHubOrganization?
+    public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
 }

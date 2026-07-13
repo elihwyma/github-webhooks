@@ -16,7 +16,6 @@ public struct GitHubCodeScanningAlertRule: Codable, Sendable, Hashable {
     public let id: String?
     public let name: String?
     public let severity: String?
-    public let securitySeverityLevel: String?
     public let description: String?
     public let fullDescription: String?
     public let tags: [String]?
@@ -47,7 +46,6 @@ public struct GitHubCodeScanningAlertInstance: Codable, Sendable, Hashable {
     public let commitSha: String?
     public let message: GitHubCodeScanningAlertMessage?
     public let location: GitHubCodeScanningAlertLocation?
-    public let htmlUrl: String?
     public let classifications: [String]?
 }
 
@@ -70,18 +68,19 @@ public struct GitHubCodeScanningAlert: Codable, Sendable, Hashable {
     public let rule: GitHubCodeScanningAlertRule?
     public let tool: GitHubCodeScanningAlertTool?
     public let mostRecentInstance: GitHubCodeScanningAlertInstance?
+    public let instances: [GitHubCodeScanningAlertInstance]?
     public let instancesUrl: String?
-    public let autoAssignee: GitHubUser?
-    public let autoDismissedAt: String?
+    public let assignees: [GitHubUser]?
+    public let dismissalApprovedBy: GitHubUser?
 }
 
 public struct CodeScanningAlertEvent: Codable, Sendable {
     public let action: CodeScanningAlertAction
     public let alert: GitHubCodeScanningAlert
-    public let ref: String
-    public let commitOid: String
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let ref: String?
+    public let commitOid: String?
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -92,6 +91,8 @@ public struct CodeScanningAlertEvent: Codable, Sendable {
 public enum SecretScanningAlertAction: String, Codable, Sendable, Hashable {
     case assigned
     case created
+    case metadataCreated = "metadata_created"
+    case metadataRemoved = "metadata_removed"
     case publiclyLeaked = "publicly_leaked"
     case reopened
     case resolved
@@ -100,13 +101,13 @@ public enum SecretScanningAlertAction: String, Codable, Sendable, Hashable {
 }
 
 public struct GitHubSecretScanningAlert: Codable, Sendable, Hashable {
-    public let number: Int
+    public let number: Int?
     public let createdAt: String?
     public let updatedAt: String?
     public let url: String?
     public let htmlUrl: String?
     public let locationsUrl: String?
-    public let state: String
+    public let state: String?
     public let resolution: String?
     public let resolvedAt: String?
     public let resolvedBy: GitHubUser?
@@ -116,18 +117,34 @@ public struct GitHubSecretScanningAlert: Codable, Sendable, Hashable {
     public let pushProtectionBypassed: Bool?
     public let pushProtectionBypassedBy: GitHubUser?
     public let pushProtectionBypassedAt: String?
+    public let pushProtectionBypassRequestComment: String?
+    public let pushProtectionBypassRequestHtmlUrl: String?
+    public let pushProtectionBypassRequestReviewer: GitHubUser?
+    public let pushProtectionBypassRequestReviewerComment: String?
     public let resolutionComment: String?
     public let validity: String?
     public let publiclyLeaked: Bool?
     public let multiRepo: Bool?
+    public let assignedTo: GitHubUser?
+    public let closureRequestComment: String?
+    public let closureRequestReviewer: GitHubUser?
+    public let closureRequestReviewerComment: String?
+    public let metadata: [GitHubSecretScanningAlertMetadata]?
+    public let provider: String?
+    public let providerSlug: String?
+}
+
+public struct GitHubSecretScanningAlertMetadata: Codable, Sendable, Hashable {
+    public let key: String
+    public let value: String
 }
 
 public struct SecretScanningAlertEvent: Codable, Sendable {
     public let action: SecretScanningAlertAction
     public let alert: GitHubSecretScanningAlert
     public let assignee: GitHubUser?
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -154,14 +171,27 @@ public struct GitHubSecretScanningAlertLocationDetails: Codable, Sendable, Hasha
     public let blobUrl: String?
     public let commitSha: String?
     public let commitUrl: String?
+    public let pageUrl: String?
+    public let htmlUrl: String?
+    public let issueTitleUrl: String?
+    public let issueBodyUrl: String?
+    public let issueCommentUrl: String?
+    public let discussionTitleUrl: String?
+    public let discussionBodyUrl: String?
+    public let discussionCommentUrl: String?
+    public let pullRequestTitleUrl: String?
+    public let pullRequestBodyUrl: String?
+    public let pullRequestCommentUrl: String?
+    public let pullRequestReviewUrl: String?
+    public let pullRequestReviewCommentUrl: String?
 }
 
 public struct SecretScanningAlertLocationEvent: Codable, Sendable {
     public let action: SecretScanningAlertLocationAction
     public let alert: GitHubSecretScanningAlert
     public let location: GitHubSecretScanningAlertLocation
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -189,6 +219,7 @@ public struct GitHubDependabotAlertDependency: Codable, Sendable, Hashable {
     public let package: GitHubDependabotAlertPackage?
     public let manifestPath: String?
     public let scope: String?
+    public let relationship: String?
 }
 
 public struct GitHubDependabotAlertAdvisory: Codable, Sendable, Hashable {
@@ -204,7 +235,20 @@ public struct GitHubDependabotAlertAdvisory: Codable, Sendable, Hashable {
     public let withdrawnAt: String?
     public let vulnerabilities: [GitHubDependabotAlertVulnerability]?
     public let cvss: GitHubDependabotAlertCvss?
-    public let cwe: [GitHubAdvisoryCwe]?
+    public let cvssSeverities: GitHubAdvisoryCvssSeverities?
+    public let epss: GitHubAdvisoryEpss?
+    public let classification: String?
+    public let cwes: [GitHubAdvisoryCwe]?
+}
+
+public struct GitHubAdvisoryCvssSeverities: Codable, Sendable, Hashable {
+    public let cvssV3: GitHubDependabotAlertCvss?
+    public let cvssV4: GitHubDependabotAlertCvss?
+}
+
+public struct GitHubAdvisoryEpss: Codable, Sendable, Hashable {
+    public let percentage: Double?
+    public let percentile: Double?
 }
 
 public struct GitHubAdvisoryReference: Codable, Sendable, Hashable {
@@ -228,7 +272,7 @@ public struct GitHubDependabotAlertCvss: Codable, Sendable, Hashable {
 }
 
 public struct GitHubDependabotAlert: Codable, Sendable, Hashable {
-    public let number: Int
+    public let number: Int?
     public let state: String
     public let dependency: GitHubDependabotAlertDependency?
     public let securityAdvisory: GitHubDependabotAlertAdvisory?
@@ -241,17 +285,30 @@ public struct GitHubDependabotAlert: Codable, Sendable, Hashable {
     public let dismissedBy: GitHubUser?
     public let dismissedReason: String?
     public let dismissedComment: String?
+    public let dismissalRequest: GitHubDependabotAlertDismissalRequest?
     public let fixedAt: String?
-    public let autoAssignee: GitHubUser?
     public let autoDismissedAt: String?
-    public let severity: String?
+    public let assignees: [GitHubUser]?
+}
+
+public struct GitHubDependabotAlertDismissalRequest: Codable, Sendable, Hashable {
+    public let id: Int?
+    public let status: String?
+    public let requester: GitHubDependabotAlertDismissalRequestRequester?
+    public let createdAt: String?
+    public let url: String?
+}
+
+public struct GitHubDependabotAlertDismissalRequestRequester: Codable, Sendable, Hashable {
+    public let id: Int?
+    public let login: String?
 }
 
 public struct DependabotAlertEvent: Codable, Sendable {
     public let action: DependabotAlertAction
     public let alert: GitHubDependabotAlert
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -279,8 +336,8 @@ public struct GitHubSecurityAdvisory: Codable, Sendable, Hashable {
     public let withdrawnAt: String?
     public let vulnerabilities: [GitHubSecurityAdvisoryVulnerability]?
     public let cvss: GitHubDependabotAlertCvss?
+    public let cvssSeverities: GitHubAdvisoryCvssSeverities?
     public let cwes: [GitHubAdvisoryCwe]?
-    public let credits: [GitHubAdvisoryCredit]?
 }
 
 public struct GitHubSecurityAdvisoryVulnerability: Codable, Sendable, Hashable {
@@ -298,4 +355,9 @@ public struct GitHubSecurityAdvisoryPackage: Codable, Sendable, Hashable {
 public struct SecurityAdvisoryEvent: Codable, Sendable {
     public let action: SecurityAdvisoryAction
     public let securityAdvisory: GitHubSecurityAdvisory
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
+    public let organization: GitHubOrganization?
+    public let installation: GitHubInstallation?
+    public let enterprise: GitHubEnterprise?
 }

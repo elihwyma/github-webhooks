@@ -41,7 +41,7 @@ public struct GitHubDiscussion: Codable, Sendable, Hashable {
     public let answerHtmlUrl: String?
     public let answerChosenAt: String?
     public let answerChosenBy: GitHubUser?
-    public let url: String?
+    public let repositoryUrl: String?
     public let number: Int
     public let title: String
     public let user: GitHubUser?
@@ -54,18 +54,38 @@ public struct GitHubDiscussion: Codable, Sendable, Hashable {
     public let updatedAt: String?
     public let authorAssociation: String?
     public let activeLockReason: String?
+    public let labels: [GitHubLabel]?
     public let reactions: GitHubReactions?
-    public let repository: GitHubRepository?
     public let timelineUrl: String?
+}
+
+public struct GitHubDiscussionCategoryChange: Codable, Sendable, Hashable {
+    public let from: GitHubDiscussionCategory?
+}
+
+public struct GitHubDiscussionChanges: Codable, Sendable, Hashable {
+    /// Present on the `edited` action when the title was changed.
+    public let title: GitHubChangedValue?
+    /// Present on the `edited` action when the body was changed.
+    public let body: GitHubChangedValue?
+    /// Present on the `category_changed` action.
+    public let category: GitHubDiscussionCategoryChange?
+    /// Present on the `transferred` action.
+    public let newDiscussion: GitHubDiscussion?
+    /// Present on the `transferred` action.
+    public let newRepository: GitHubRepository?
 }
 
 public struct DiscussionEvent: Codable, Sendable {
     public let action: DiscussionAction
     public let discussion: GitHubDiscussion
+    public let changes: GitHubDiscussionChanges?
     public let answer: GitHubDiscussionComment?
+    /// Present on the `unanswered` action.
+    public let oldAnswer: GitHubDiscussionComment?
     public let label: GitHubLabel?
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -104,8 +124,8 @@ public struct DiscussionCommentEvent: Codable, Sendable {
     public let comment: GitHubDiscussionComment
     public let discussion: GitHubDiscussion
     public let changes: GitHubDiscussionCommentChanges?
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?

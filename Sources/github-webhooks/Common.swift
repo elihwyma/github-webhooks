@@ -35,12 +35,54 @@ public struct GitHubTimestamp: Codable, Sendable, Hashable {
     }
 }
 
+// MARK: - JSON Value
+
+/// An arbitrary JSON value, used for payload fields whose shape GitHub does not fix
+/// (e.g. `repository_dispatch.client_payload`, `workflow_dispatch.inputs`, package metadata).
+public indirect enum GitHubJSONValue: Codable, Sendable, Hashable {
+    case string(String)
+    case number(Double)
+    case bool(Bool)
+    case object([String: GitHubJSONValue])
+    case array([GitHubJSONValue])
+    case null
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if container.decodeNil() {
+            self = .null
+        } else if let b = try? container.decode(Bool.self) {
+            self = .bool(b)
+        } else if let n = try? container.decode(Double.self) {
+            self = .number(n)
+        } else if let s = try? container.decode(String.self) {
+            self = .string(s)
+        } else if let a = try? container.decode([GitHubJSONValue].self) {
+            self = .array(a)
+        } else {
+            self = .object(try container.decode([String: GitHubJSONValue].self))
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .string(let s): try container.encode(s)
+        case .number(let n): try container.encode(n)
+        case .bool(let b): try container.encode(b)
+        case .object(let o): try container.encode(o)
+        case .array(let a): try container.encode(a)
+        case .null: try container.encodeNil()
+        }
+    }
+}
+
 // MARK: - User
 
 public struct GitHubUser: Codable, Sendable, Hashable {
     public let login: String
     public let id: Int
-    public let nodeId: String
+    public let nodeId: String?
     public let avatarUrl: String
     public let gravatarId: String?
     public let url: String
@@ -104,6 +146,13 @@ public struct GitHubInstallation: Codable, Sendable, Hashable {
     public let repositoriesUrl: String?
     public let htmlUrl: String?
     public let events: [String]?
+    /// Permission name → access level. Note: `convertFromSnakeCase` also converts
+    /// dictionary keys, so multi-word permission names arrive camelCased.
+    public let permissions: [String: String]?
+    public let hasMultipleSingleFiles: Bool?
+    public let singleFilePaths: [String]?
+    public let clientId: String?
+    public let contactEmail: String?
     public let createdAt: GitHubTimestamp?
     public let updatedAt: GitHubTimestamp?
     public let singleFileName: String?
@@ -130,14 +179,14 @@ public struct GitHubEnterprise: Codable, Sendable, Hashable {
 
 public struct GitHubRepository: Codable, Sendable, Hashable {
     public let id: Int
-    public let nodeId: String
+    public let nodeId: String?
     public let name: String
-    public let fullName: String
-    public let owner: GitHubUser
-    public let `private`: Bool
-    public let htmlUrl: String
+    public let fullName: String?
+    public let owner: GitHubUser?
+    public let `private`: Bool?
+    public let htmlUrl: String?
     public let description: String?
-    public let fork: Bool
+    public let fork: Bool?
     public let url: String
     public let archiveUrl: String?
     public let assigneesUrl: String?
@@ -232,6 +281,8 @@ public struct GitHubTeam: Codable, Sendable, Hashable {
     public let membersUrl: String?
     public let repositoriesUrl: String?
     public let parent: GitHubTeamParent?
+    /// Present in the simplified team shape on `membership` removed events.
+    public let deleted: Bool?
 }
 
 public struct GitHubTeamParent: Codable, Sendable, Hashable {
@@ -343,13 +394,10 @@ public struct GitHubIssue: Codable, Sendable, Hashable {
     public let number: Int
     public let title: String
     public let body: String?
-    public let bodyHtml: String?
-    public let bodyText: String?
     public let user: GitHubUser?
-    public let labels: [GitHubLabel]
-    public let state: String
-    public let stateName: String?
-    public let locked: Bool
+    public let labels: [GitHubLabel]?
+    public let state: String?
+    public let locked: Bool?
     public let assignee: GitHubUser?
     public let assignees: [GitHubUser]
     public let milestone: GitHubMilestone?
@@ -357,7 +405,6 @@ public struct GitHubIssue: Codable, Sendable, Hashable {
     public let createdAt: String
     public let updatedAt: String?
     public let closedAt: String?
-    public let closedBy: GitHubUser?
     public let htmlUrl: String
     public let url: String
     public let repositoryUrl: String?
@@ -388,8 +435,8 @@ public struct GitHubPullRequestBranch: Codable, Sendable, Hashable {
 public struct GitHubAutoMerge: Codable, Sendable, Hashable {
     public let enabledBy: GitHubUser?
     public let mergeMethod: String
-    public let commitTitle: String
-    public let commitMessage: String
+    public let commitTitle: String?
+    public let commitMessage: String?
 }
 
 public struct GitHubPullRequest: Codable, Sendable, Hashable {
@@ -511,8 +558,10 @@ public struct GitHubRelease: Codable, Sendable, Hashable {
     public let tarballUrl: String?
     public let zipballUrl: String?
     public let author: GitHubUser?
-    public let assets: [GitHubReleaseAsset]
+    public let assets: [GitHubReleaseAsset]?
     public let discussionUrl: String?
+    public let mentionsCount: Int?
+    public let reactions: GitHubReactions?
 }
 
 // MARK: - Check Run / Suite
@@ -585,6 +634,8 @@ public struct GitHubDeployment: Codable, Sendable, Hashable {
     public let sha: String?
     public let ref: String?
     public let task: String?
+    /// An object in most payloads, but a JSON-encoded string in some newer ones.
+    public let payload: GitHubJSONValue?
     public let originalEnvironment: String?
     public let environment: String?
     public let description: String?
@@ -728,6 +779,8 @@ public struct GitHubHook: Codable, Sendable, Hashable {
     public let id: Int
     public let type: String
     public let name: String
+    /// Present on GitHub App hooks.
+    public let appId: Int?
     public let active: Bool
     public let events: [String]
     public let config: GitHubHookConfig
@@ -762,6 +815,8 @@ public struct GitHubReview: Codable, Sendable, Hashable {
     public let commitId: String?
     public let submittedAt: String?
     public let authorAssociation: String?
+    // Leading underscore is preserved by convertFromSnakeCase, so this matches `_links`.
+    public let _links: GitHubReviewLinks?
 }
 
 // MARK: - Comment
@@ -788,6 +843,7 @@ public struct GitHubComment: Codable, Sendable, Hashable {
     public let commitId: String?
     public let originalCommitId: String?
     public let inReplyToId: Int?
+    public let issueUrl: String?
     public let pullRequestUrl: String?
     public let startLine: Int?
     public let originalStartLine: Int?
@@ -811,18 +867,9 @@ public struct GitHubMembership: Codable, Sendable, Hashable {
 
 // MARK: - Review Thread
 
+/// The `thread` object on `pull_request_review_thread` events is exactly
+/// `{node_id, comments}` — per-comment line/position details live on the comments.
 public struct GitHubReviewThread: Codable, Sendable, Hashable {
     public let nodeId: String?
     public let comments: [GitHubComment]?
-    public let startLine: Int?
-    public let originalStartLine: Int?
-    public let startSide: String?
-    public let line: Int?
-    public let originalLine: Int?
-    public let side: String?
-    public let path: String?
-    public let diffSide: String?
-    public let resolved: Bool?
-    public let resolvedBy: GitHubUser?
-    public let isCollapsed: Bool?
 }

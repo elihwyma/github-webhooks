@@ -20,17 +20,23 @@ public struct GitHubOrganizationInvitation: Codable, Sendable, Hashable {
     public let failedAt: String?
     public let failedReason: String?
     public let teamCount: Int?
-    public let inviterUrl: String?
-    public let invitationsUrl: String?
+    public let invitationTeamsUrl: String?
+    public let invitationSource: String?
     public let inviter: GitHubUser?
+}
+
+public struct GitHubOrganizationChanges: Codable, Sendable, Hashable {
+    public let login: GitHubChangedValue?
 }
 
 public struct OrganizationEvent: Codable, Sendable {
     public let action: OrganizationAction
+    public let changes: GitHubOrganizationChanges?
     public let invitation: GitHubOrganizationInvitation?
+    public let user: GitHubUser?
     public let membership: GitHubMembership?
     public let organization: GitHubOrganization?
-    public let sender: GitHubUser
+    public let sender: GitHubUser?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
 }
@@ -46,7 +52,7 @@ public enum MemberAction: String, Codable, Sendable, Hashable {
 public struct GitHubMemberChanges: Codable, Sendable, Hashable {
     public let oldPermission: GitHubChangedValue?
     public let permission: GitHubMemberPermissionChange?
-    public let roleName: GitHubChangedValue?
+    public let roleName: GitHubMemberPermissionChange?
 }
 
 public struct GitHubMemberPermissionChange: Codable, Sendable, Hashable {
@@ -58,8 +64,8 @@ public struct MemberEvent: Codable, Sendable {
     public let action: MemberAction
     public let member: GitHubUser?
     public let changes: GitHubMemberChanges?
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -77,7 +83,7 @@ public struct MembershipEvent: Codable, Sendable {
     public let scope: String
     public let member: GitHubUser?
     public let team: GitHubTeam
-    public let sender: GitHubUser
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -111,9 +117,7 @@ public struct GitHubTeamPermissionsChange: Codable, Sendable, Hashable {
 
 public struct GitHubTeamPermissions: Codable, Sendable, Hashable {
     public let admin: Bool?
-    public let maintain: Bool?
     public let push: Bool?
-    public let triage: Bool?
     public let pull: Bool?
 }
 
@@ -122,7 +126,7 @@ public struct TeamEvent: Codable, Sendable {
     public let team: GitHubTeam
     public let changes: GitHubTeamChanges?
     public let repository: GitHubRepository?
-    public let sender: GitHubUser
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -133,8 +137,8 @@ public struct TeamEvent: Codable, Sendable {
 /// Triggered when a repository is added to a team.
 public struct TeamAddEvent: Codable, Sendable {
     public let team: GitHubTeam
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -149,9 +153,9 @@ public enum OrgBlockAction: String, Codable, Sendable, Hashable {
 
 public struct OrgBlockEvent: Codable, Sendable {
     public let action: OrgBlockAction
-    public let blockedUser: GitHubUser
+    public let blockedUser: GitHubUser?
     public let organization: GitHubOrganization?
-    public let sender: GitHubUser
+    public let sender: GitHubUser?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
 }

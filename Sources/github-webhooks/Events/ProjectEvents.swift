@@ -16,6 +16,7 @@ public struct GitHubProject: Codable, Sendable, Hashable {
     public let url: String?
     public let htmlUrl: String?
     public let columnsUrl: String?
+    public let ownerUrl: String?
     public let name: String
     public let body: String?
     public let number: Int
@@ -35,7 +36,7 @@ public struct ProjectEvent: Codable, Sendable {
     public let project: GitHubProject
     public let changes: GitHubProjectChanges?
     public let repository: GitHubRepository?
-    public let sender: GitHubUser
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -64,6 +65,8 @@ public struct GitHubProjectCard: Codable, Sendable, Hashable {
     public let updatedAt: String?
     public let contentUrl: String?
     public let archived: Bool?
+    /// Present on `moved` events. The schema allows a string, number, or null here.
+    public let afterId: GitHubJSONValue?
 }
 
 public struct GitHubProjectCardChanges: Codable, Sendable, Hashable {
@@ -79,9 +82,8 @@ public struct ProjectCardEvent: Codable, Sendable {
     public let action: ProjectCardAction
     public let projectCard: GitHubProjectCard
     public let changes: GitHubProjectCardChanges?
-    public let afterId: Int?
     public let repository: GitHubRepository?
-    public let sender: GitHubUser
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -115,9 +117,8 @@ public struct ProjectColumnEvent: Codable, Sendable {
     public let action: ProjectColumnAction
     public let projectColumn: GitHubProjectColumn
     public let changes: GitHubProjectColumnChanges?
-    public let afterId: Int?
     public let repository: GitHubRepository?
-    public let sender: GitHubUser
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -148,12 +149,36 @@ public struct GitHubProjectsV2: Codable, Sendable, Hashable {
     public let shortDescription: String?
     public let deletedAt: String?
     public let deletedBy: GitHubUser?
+    public let state: String?
+    public let latestStatusUpdate: GitHubProjectsV2StatusUpdate?
+    public let isTemplate: Bool?
+}
+
+/// A `{from, to}` pair of string values used in projects v2 `changes` payloads.
+public struct GitHubProjectsV2StringChange: Codable, Sendable, Hashable {
+    public let from: String?
+    public let to: String?
+}
+
+/// A `{from, to}` pair of boolean values used in projects v2 `changes` payloads.
+public struct GitHubProjectsV2BoolChange: Codable, Sendable, Hashable {
+    public let from: Bool?
+    public let to: Bool?
+}
+
+/// `changes` on `projects_v2` edited events.
+public struct GitHubProjectsV2Changes: Codable, Sendable, Hashable {
+    public let title: GitHubProjectsV2StringChange?
+    public let description: GitHubProjectsV2StringChange?
+    public let shortDescription: GitHubProjectsV2StringChange?
+    public let `public`: GitHubProjectsV2BoolChange?
 }
 
 public struct ProjectsV2Event: Codable, Sendable {
     public let action: ProjectsV2Action
     public let projectsV2: GitHubProjectsV2
-    public let sender: GitHubUser
+    public let changes: GitHubProjectsV2Changes?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -185,19 +210,39 @@ public struct GitHubProjectsV2Item: Codable, Sendable, Hashable {
 
 public struct GitHubProjectsV2ItemChanges: Codable, Sendable, Hashable {
     public let fieldValue: GitHubProjectsV2FieldValueChange?
-    public let previousProjectsV2ItemNodeId: String?
+    public let previousProjectsV2ItemNodeId: GitHubProjectsV2ItemNodeIdChange?
+    /// Present on `archived` and `restored` events: `{from, to}` nullable timestamps.
+    public let archivedAt: GitHubProjectsV2StringChange?
+    /// Present on `converted` events: `{from, to}` content type names.
+    public let contentType: GitHubProjectsV2StringChange?
+    /// Present on `edited` events when a draft issue body was changed.
+    public let body: GitHubProjectsV2StringChange?
 }
 
+/// `changes.previous_projects_v2_item_node_id` on `projects_v2_item` reordered events:
+/// an object `{from, to}`, not a plain string.
+public struct GitHubProjectsV2ItemNodeIdChange: Codable, Sendable, Hashable {
+    public let from: String?
+    public let to: String?
+}
+
+/// `changes.field_value` on `projects_v2_item` edited events.
+/// `from`/`to` may be a string, a number, a single-select option object,
+/// an iteration setting object, or null depending on `field_type`.
 public struct GitHubProjectsV2FieldValueChange: Codable, Sendable, Hashable {
     public let fieldNodeId: String?
     public let fieldType: String?
+    public let fieldName: String?
+    public let projectNumber: Int?
+    public let from: GitHubJSONValue?
+    public let to: GitHubJSONValue?
 }
 
 public struct ProjectsV2ItemEvent: Codable, Sendable {
     public let action: ProjectsV2ItemAction
     public let projectsV2Item: GitHubProjectsV2Item
     public let changes: GitHubProjectsV2ItemChanges?
-    public let sender: GitHubUser
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -224,10 +269,19 @@ public struct GitHubProjectsV2StatusUpdate: Codable, Sendable, Hashable {
     public let body: String?
 }
 
+/// `changes` on `projects_v2_status_update` edited events.
+public struct GitHubProjectsV2StatusUpdateChanges: Codable, Sendable, Hashable {
+    public let body: GitHubProjectsV2StringChange?
+    public let status: GitHubProjectsV2StringChange?
+    public let startDate: GitHubProjectsV2StringChange?
+    public let targetDate: GitHubProjectsV2StringChange?
+}
+
 public struct ProjectsV2StatusUpdateEvent: Codable, Sendable {
     public let action: ProjectsV2StatusUpdateAction
     public let projectsV2StatusUpdate: GitHubProjectsV2StatusUpdate
-    public let sender: GitHubUser
+    public let changes: GitHubProjectsV2StatusUpdateChanges?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?

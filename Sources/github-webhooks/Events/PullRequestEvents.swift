@@ -30,7 +30,6 @@ public struct GitHubPullRequestChanges: Codable, Sendable, Hashable {
     public let title: GitHubChangedValue?
     public let body: GitHubChangedValue?
     public let base: GitHubChangedBase?
-    public let reviewers: GitHubChangedReviewers?
 }
 
 public struct GitHubChangedValue: Codable, Sendable, Hashable {
@@ -42,34 +41,24 @@ public struct GitHubChangedBase: Codable, Sendable, Hashable {
     public let sha: GitHubChangedValue?
 }
 
-public struct GitHubChangedReviewers: Codable, Sendable, Hashable {
-    public let users: GitHubChangedReviewerUsers?
-    public let teams: GitHubChangedReviewerTeams?
-}
-
-public struct GitHubChangedReviewerUsers: Codable, Sendable, Hashable {
-    public let added: [GitHubUser]?
-    public let removed: [GitHubUser]?
-}
-
-public struct GitHubChangedReviewerTeams: Codable, Sendable, Hashable {
-    public let added: [GitHubTeam]?
-    public let removed: [GitHubTeam]?
-}
-
 public struct PullRequestEvent: Codable, Sendable {
     public let action: PullRequestAction
     public let number: Int
     public let pullRequest: GitHubPullRequest
     public let assignee: GitHubUser?
     public let label: GitHubLabel?
+    /// Present on `milestoned`/`demilestoned` actions.
+    public let milestone: GitHubMilestone?
+    /// Present on `dequeued`, `auto_merge_enabled`, and `auto_merge_disabled` actions.
+    public let reason: String?
     public let requestedReviewer: GitHubUser?
     public let requestedTeam: GitHubTeam?
     public let changes: GitHubPullRequestChanges?
-    public let beforeCommitOid: String?
-    public let afterCommitOid: String?
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    /// Present on `synchronize` actions; the payload keys are plain `before`/`after`.
+    public let before: String?
+    public let after: String?
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -88,8 +77,8 @@ public struct PullRequestReviewEvent: Codable, Sendable {
     public let review: GitHubReview
     public let pullRequest: GitHubPullRequest
     public let changes: GitHubPullRequestReviewChanges?
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -112,8 +101,8 @@ public struct PullRequestReviewCommentEvent: Codable, Sendable {
     public let comment: GitHubComment
     public let pullRequest: GitHubPullRequest
     public let changes: GitHubPullRequestReviewCommentChanges?
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -134,8 +123,8 @@ public struct PullRequestReviewThreadEvent: Codable, Sendable {
     public let action: PullRequestReviewThreadAction
     public let pullRequest: GitHubPullRequest
     public let thread: GitHubReviewThread
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?

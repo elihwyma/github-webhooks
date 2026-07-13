@@ -14,7 +14,7 @@ public struct PushEvent: Codable, Sendable {
     public let commits: [GitHubPushCommit]
     public let headCommit: GitHubPushCommit?
     public let pusher: GitHubCommitAuthor
-    public let repository: GitHubRepository
+    public let repository: GitHubRepository?
     public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
@@ -34,8 +34,8 @@ public struct CreateEvent: Codable, Sendable {
     public let description: String?
     /// The type of actor that created the ref: `user` or `deploy_key`.
     public let pusherType: String
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -50,8 +50,8 @@ public struct DeleteEvent: Codable, Sendable {
     public let refType: String
     /// The type of actor that deleted the ref: `user` or `deploy_key`.
     public let pusherType: String
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -66,8 +66,8 @@ public enum CommitCommentAction: String, Codable, Sendable, Hashable {
 public struct CommitCommentEvent: Codable, Sendable {
     public let action: CommitCommentAction
     public let comment: GitHubComment
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -127,8 +127,8 @@ public struct StatusEvent: Codable, Sendable {
     public let createdAt: String
     public let updatedAt: String
     public let avatarUrl: String?
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -149,8 +149,8 @@ public struct GitHubWikiPage: Codable, Sendable, Hashable {
 /// Triggered when a wiki page is created or updated.
 public struct GollumEvent: Codable, Sendable {
     public let pages: [GitHubWikiPage]
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
@@ -160,8 +160,8 @@ public struct GollumEvent: Codable, Sendable {
 
 /// Triggered when a private repository is made public.
 public struct PublicEvent: Codable, Sendable {
-    public let repository: GitHubRepository
-    public let sender: GitHubUser
+    public let repository: GitHubRepository?
+    public let sender: GitHubUser?
     public let organization: GitHubOrganization?
     public let installation: GitHubInstallation?
     public let enterprise: GitHubEnterprise?
